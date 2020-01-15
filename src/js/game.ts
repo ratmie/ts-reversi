@@ -15,7 +15,11 @@ export default class Game {
 
   CELL_NUM = 8;
 
+  readonly CELL_SIZE: number = 50;
+
   cells: Cell[][];
+
+  turn: Color | null;
 
   constructor(canvas: HTMLCanvasElement) {
     this.board = new Board(canvas, this.CELL_NUM);
@@ -26,8 +30,15 @@ export default class Game {
         stone: null
       }))
     );
+    this.turn = null;
     this.reset();
-    // console.dir(this.cells);
+    canvas.addEventListener('mousedown', e => {
+      this.click(e);
+    });
+    const button = document.getElementById('start');
+    if (button) {
+      button.onclick = () => this.start();
+    }
   }
 
   reset(): void {
@@ -61,10 +72,27 @@ export default class Game {
     return true;
   }
 
-  start(): void {
-    while (true) {
-      player1.act();
-      player2.act();
+  click(e): void {
+    const rect = e.target.getBoundingClientRect();
+    const x = Math.floor((e.clientX - rect.left) / this.CELL_SIZE);
+    const y = Math.floor((e.clientY - rect.top) / this.CELL_SIZE);
+    console.log(x, y);
+    if (this.turn) {
+      this.placeDisk(x, y, this.turn);
+      this.changeTurn();
     }
+  }
+
+  changeTurn(): void {
+    if (this.turn === 'dark') {
+      this.turn = 'light';
+    } else {
+      this.turn = 'dark';
+    }
+  }
+
+  start(): void {
+    console.log('game start');
+    this.turn = 'dark';
   }
 }
