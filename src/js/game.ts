@@ -11,12 +11,9 @@ type Cell = {
 type Position = [number, number];
 
 export default class Game {
-  // player1: Player;
-  // player2: Player;
+  readonly CELL_NUM = 8;
 
-  CELL_NUM = 8;
-
-  readonly CELL_SIZE: number = 50;
+  readonly CELL_SIZE = 50;
 
   cells: Cell[][];
 
@@ -25,6 +22,10 @@ export default class Game {
   turn: Color;
 
   isGaming: boolean;
+
+  score: Map<Color, number>;
+
+  canPlace: Map<Color, number>;
 
   constructor(canvas: HTMLCanvasElement) {
     this.board = new Board(canvas, this.CELL_NUM);
@@ -45,6 +46,14 @@ export default class Game {
     );
     this.turn = 'dark';
     this.isGaming = false;
+    this.score = new Map([
+      ['light', 0],
+      ['dark', 0]
+    ]);
+    this.canPlace = new Map([
+      ['light', 0],
+      ['dark', 0]
+    ]);
     this.reset();
     canvas.addEventListener('mousedown', e => {
       this.click(e);
@@ -68,17 +77,9 @@ export default class Game {
   // }
 
   placeDisk(x: number, y: number, color: Color): boolean {
-    if (x < 0 || x >= this.CELL_NUM || y < 0 || y >= this.CELL_NUM) {
+    if (!(x in this.cells && y in this.cells[x])) {
       throw new Error('place disk at out of board');
     }
-
-    // if (this.cells[x][y].stone != null) {
-    //   console.log(
-    //     `cell(${x}, ${y} ${this.cells[x][y].stone} `,
-    //     'already exist'
-    //   );
-    //   return false;
-    // }
 
     this.cells[x][y] = {
       stone: color,
@@ -95,95 +96,53 @@ export default class Game {
     return true;
   }
 
+  getTurnOverStoneDirection(
+    x: number,
+    y: number,
+    vecX: number,
+    vecY: number,
+    color: Color
+  ): Position[] {
+    if (vecX === 0 && vecY === 0) {
+      throw new Error('vector error');
+    }
+    const stones: Position[] = [];
+    if (!(x in this.cells && y in this.cells[x])) {
+      console.log('out of bounds');
+      return stones;
+    }
+    let i = x + vecX;
+    let j = y + vecY;
+    while (
+      i in this.cells &&
+      j in this.cells[i] &&
+      this.cells[i][j].stone &&
+      this.cells[i][j].stone !== color
+    ) {
+      stones.push([i, j]);
+      i += vecX;
+      j += vecY;
+    }
+    if (
+      !(i in this.cells) ||
+      !(j in this.cells[i]) ||
+      !this.cells[i][j].stone ||
+      this.cells[i][j].stone !== color
+    ) {
+      stones.length = 0;
+    }
+    return stones;
+  }
+
   getTurnOverStone(x: number, y: number, color: Color): Position[] {
-    // +x方向
-    const stonesPlusX: Position[] = [];
-    if (x < this.CELL_NUM) {
-      let i = x + 1;
-      while (
-        i < this.CELL_NUM &&
-        this.cells[i][y].stone &&
-        this.cells[i][y].stone !== color
-      ) {
-        stonesPlusX.push([i, y]);
-        i += 1;
-      }
-      if (
-        i === this.CELL_NUM ||
-        !this.cells[i][y].stone ||
-        this.cells[i][y].stone !== color
-      ) {
-        stonesPlusX.length = 0;
-      }
-    }
-
-    // -x
-    const stonesMinusX: Position[] = [];
-    if (x > 0) {
-      let i = x - 1;
-      while (
-        i > 0 &&
-        this.cells[i][y].stone &&
-        this.cells[i][y].stone !== color
-      ) {
-        stonesMinusX.push([i, y]);
-        i -= 1;
-      }
-      if (
-        i === 0 ||
-        !this.cells[i][y].stone ||
-        this.cells[i][y].stone !== color
-      ) {
-        stonesMinusX.length = 0;
-      }
-    }
-
-    // +y
-    const stonesPlusY: Position[] = [];
-    if (y < this.CELL_NUM) {
-      let i = y + 1;
-      while (
-        i < this.CELL_NUM &&
-        this.cells[x][i].stone &&
-        this.cells[x][i].stone !== color
-      ) {
-        stonesPlusY.push([x, i]);
-        i += 1;
-      }
-      if (
-        i === this.CELL_NUM ||
-        !this.cells[x][i].stone ||
-        this.cells[x][i].stone !== color
-      ) {
-        stonesPlusY.length = 0;
-      }
-    }
-
-    // -y
-    const stonesMinusY: Position[] = [];
-    if (y > 0) {
-      let i = y - 1;
-      while (
-        i > 0 &&
-        this.cells[x][i].stone &&
-        this.cells[x][i].stone !== color
-      ) {
-        stonesMinusY.push([x, i]);
-        i -= 1;
-      }
-      if (
-        i === 0 ||
-        !this.cells[x][i].stone ||
-        this.cells[x][i].stone !== color
-      ) {
-        stonesMinusY.length = 0;
-      }
-    }
-
-    return stonesPlusX
-      .concat(stonesMinusX)
-      .concat(stonesPlusY)
-      .concat(stonesMinusY);
+    return this.getTurnOverStoneDirection(x, y, 1, 0, color)
+      .concat(this.getTurnOverStoneDirection(x, y, -1, 0, color))
+      .concat(this.getTurnOverStoneDirection(x, y, 0, 1, color))
+      .concat(this.getTurnOverStoneDirection(x, y, 0, -1, color))
+      .concat(this.getTurnOverStoneDirection(x, y, 1, 1, color))
+      .concat(this.getTurnOverStoneDirection(x, y, -1, 1, color))
+      .concat(this.getTurnOverStoneDirection(x, y, 1, -1, color))
+      .concat(this.getTurnOverStoneDirection(x, y, -1, -1, color));
   }
 
   click(e: MouseEvent): void {
@@ -231,18 +190,42 @@ export default class Game {
 
   // 各マスに石を置いた時に影響を調べる。
   judgeCells(): void {
+    let scoreDark = 0;
+    let scoreLight = 0;
+    let canPlaceDark = 0;
+    let canPlaceLight = 0;
     for (let x = 0; x < this.CELL_NUM; x += 1) {
       for (let y = 0; y < this.CELL_NUM; y += 1) {
         const cell = this.cells[x][y];
-        if (!cell.stone) {
-          const turnOverStonesByDark = this.getTurnOverStone(x, y, 'dark');
-          cell.canPlace.set('dark', turnOverStonesByDark.length !== 0);
-          cell.willTurnOverStones.set('dark', turnOverStonesByDark);
-          const turnOverStonesByLight = this.getTurnOverStone(x, y, 'light');
-          cell.canPlace.set('light', turnOverStonesByLight.length !== 0);
-          cell.willTurnOverStones.set('light', turnOverStonesByLight);
+        switch (cell.stone) {
+          case 'dark':
+            canPlaceDark += 1;
+            break;
+          case 'light':
+            canPlaceLight += 1;
+            break;
+          default: {
+            const turnOverStonesByDark = this.getTurnOverStone(x, y, 'dark');
+            cell.canPlace.set('dark', turnOverStonesByDark.length !== 0);
+            scoreDark += turnOverStonesByDark.length;
+            cell.willTurnOverStones.set('dark', turnOverStonesByDark);
+            const turnOverStonesByLight = this.getTurnOverStone(x, y, 'light');
+            cell.canPlace.set('light', turnOverStonesByLight.length !== 0);
+            scoreLight += turnOverStonesByLight.length;
+            cell.willTurnOverStones.set('light', turnOverStonesByLight);
+            break;
+          }
         }
       }
+    }
+    this.score.set('dark', scoreDark);
+    this.score.set('light', scoreLight);
+    this.canPlace.set('dark', canPlaceDark);
+    this.canPlace.set('light', canPlaceLight);
+    if (canPlaceDark === 0 && canPlaceLight === 0) {
+      const winner = scoreDark > scoreLight ? 'dark' : 'light';
+      console.log('Game set. ');
+      console.log(`${winner} win !!`);
     }
     console.log(this.cells);
   }

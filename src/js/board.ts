@@ -13,7 +13,6 @@ export default class Board {
     this.cellNum = cellNum;
     this.c = canvas;
     const ctx = canvas.getContext('2d');
-    console.log(typeof ctx);
     if (!(ctx instanceof CanvasRenderingContext2D)) {
       throw new Error('canvas error');
     }
