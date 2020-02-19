@@ -6,11 +6,13 @@
   "scripts": {
     "build": "webpack --mode=development",
     "start": "webpack-dev-server --mode=development",
-    "lint": "eslint ./src/js/*.* --fix"
+    "lint": "eslint ./src/js/*.* --fix",
+    "test": "jest --coverage"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/jest": "^24.9.0",
     "@typescript-eslint/eslint-plugin": "^2.16.0",
     "@typescript-eslint/parser": "^2.16.0",
     "eslint": "^6.8.0",
@@ -18,8 +20,12 @@
     "eslint-config-prettier": "^6.9.0",
     "eslint-import-resolver-webpack": "^0.12.1",
     "eslint-plugin-import": "^2.20.0",
+    "eslint-plugin-jest": "^23.6.0",
     "eslint-plugin-prettier": "^3.1.2",
+    "jest": "^24.9.0",
+    "jest-canvas-mock": "^2.2.0",
     "prettier": "^1.19.1",
+    "ts-jest": "^24.3.0",
     "ts-loader": "^6.2.1",
     "typescript": "^3.7.4",
     "webpack": "^4.41.5",
