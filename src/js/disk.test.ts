@@ -10,4 +10,14 @@ describe('Disk', (): void => {
     const dark = new Disk('dark');
     expect(dark.getColor()).toBe('dark');
   });
+
+  test('turn over', (): void => {
+    let disk = new Disk('light');
+    disk.turnOver();
+    expect(disk.getColor()).toBe('dark');
+
+    disk = new Disk('dark');
+    disk.turnOver();
+    expect(disk.getColor()).toBe('light');
+  });
 });
