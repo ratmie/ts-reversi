@@ -45,3 +45,7 @@ describe('game', (): void => {
   // ここは置けるよね
   // ひっくり返ったか
 });
+
+// updater
+// draw board
+// drow stones
