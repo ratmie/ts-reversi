@@ -1,0 +1,15 @@
+@startuml
+
+class Disk
+class Board
+class Display
+class Player
+class Game
+
+' A board has disks
+Board *- Disk
+
+Game o- Board
+Game o- Display
+
+@enduml
